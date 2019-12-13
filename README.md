@@ -154,5 +154,9 @@ of measures, and generating a matching package registry.
 It calls `elm` with `$HOME` pointed at this directory and networking
 disabled by setting an invalid `$HTTP_PROXY` variable.
 
-This article on an [Elm build system for Guix](https://vllmrt.net/spam/guix-elm-2.html)
-goes into this with a bit more detail.
+The following two articles go into this with a bit more detail:
+
+- https://vllmrt.net/spam/guix-elm-2.html describes a Guix build system
+  for Elm applications that uses the same techniques.
+- https://vllmrt.net/spam/subverting-elm.html shows how shelm came about
+  when figuring out how to build an Elm app with native code.
