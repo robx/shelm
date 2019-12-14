@@ -44,7 +44,7 @@ With a regular `elm.json`, there should be no functional difference to normal
 
 - Specify alternative locations for dependencies. E.g., to use a patched
   version of the `elm/time` package that's published at `github.com/me/elm-time`,
-  you would change the dependency section `elm.json` to read
+  you would change the dependency section of `elm.json` to read
   ```
   "dependencies": {
       "direct": {
