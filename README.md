@@ -108,7 +108,7 @@ of `elm/time`,
 "locations": {
     "elm/time": {
         "method": "git",
-        "url": "https://https://github.com/elm/time.git",
+        "url": "https://github.com/elm/time.git",
         "ref": "master"
     }
 }
