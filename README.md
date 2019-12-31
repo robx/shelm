@@ -142,7 +142,7 @@ The [jq](https://stedolan.github.io/jq/) JSON processor is used to read `elm.jso
 
 __curl, git, tar__
 
-`git` is required the "git" location method, `curl` and `tar` for the default
+`git` is required for the "git" location method, `curl` and `tar` for the default
 "github" archive method.
 
 
