@@ -68,10 +68,12 @@ json_location() {
 fetch_github_release() {
 	pkgname="$1"
 	version="$2"
-	curlargs=-sSL # no progress, show errors, follow redirects
+	curlargs=-sSLf # no progress, show errors, follow redirects, exit with error on HTTP status >=400
 	url="https://github.com/$pkgname/archive/$version.tar.gz"
 	echo "fetching $url"
-	curl "$curlargs" "$url" | tar -xz
+	tarball="$(mktemp)"
+	curl "$curlargs" "$url" >"$tarball" || exit 1
+	tar -xzf "$tarball"
 }
 
 fetch_git_ref() {
