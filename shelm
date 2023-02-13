@@ -122,7 +122,7 @@ fetch() {
 
 # List dependencies in the local package cache, in the form $author/$project/$version.
 list_dependencies() {
-	cd "$pkgdir" && ls -d -- */*/* 2>/dev/null
+	cd "$pkgdir" && find . -type d -depth 3 | sed 's|^./||'
 }
 
 # Prune dependencies from the local package cache that don't match the required
