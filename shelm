@@ -160,8 +160,9 @@ fetch_dependencies() {
 # Haskell binary encoding of integers as 8 bytes big-endian
 encode_int64() {
 	hex=$(printf "%016x" "$1")
-	printf "\\x${hex:0:2}\\x${hex:2:2}\\x${hex:4:2}\\x${hex:6:2}"
-	printf "\\x${hex:8:2}\\x${hex:10:2}\\x${hex:12:2}\\x${hex:14:2}"
+	printf "%b%b%b%b%b%b%b%b" \
+		"\\x${hex:0:2}" "\\x${hex:2:2}" "\\x${hex:4:2}" "\\x${hex:6:2}" \
+		"\\x${hex:8:2}" "\\x${hex:10:2}" "\\x${hex:12:2}" "\\x${hex:14:2}"
 }
 
 # Haskell binary encoding of UTF8 strings
@@ -173,7 +174,7 @@ encode_string() {
 # Haskell binary encoding of bytes
 encode_byte() {
 	hex=$(printf "%02x" "$1")
-	printf "\\x${hex}"
+	printf "%b" "\\x${hex}"
 }
 
 # Elm 0.19.1 compact encoding of short UTF8 strings
