@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -eu -o pipefail
 
 usage() {
 	cat <<EOF
@@ -120,16 +120,21 @@ fetch() {
 	esac
 }
 
+# List dependencies in the local package cache, in the form $author/$project/$version.
+list_dependencies() {
+	cd "$pkgdir" && find . -type d -depth 3 | sed 's|^./||'
+}
+
 # Prune dependencies from the local package cache that don't match the required
 # dependency versions. This is necessary due to the limitation to one version
 # per package of the registry generators.
 prune_dependencies() {
-	(cd "$pkgdir" && ls -d -- */*/* 2>/dev/null) | while IFS=/ read -r author project version
+	list_dependencies | while IFS=/ read -r author project version
 	do
 		dep="$(json_dependency_version "$author/$project" < elm.json)"
 		if [ "$version" != "$dep" ]; then
 			echo "pruning stale dependency $author/$project-$version"
-			rm -r "$pkgdir/$author/$project/$version"
+			rm -r "${pkgdir:?}/$author/$project/$version"
 		fi
 	done
 }
@@ -155,8 +160,9 @@ fetch_dependencies() {
 # Haskell binary encoding of integers as 8 bytes big-endian
 encode_int64() {
 	hex=$(printf "%016x" "$1")
-	printf "\\x${hex:0:2}\\x${hex:2:2}\\x${hex:4:2}\\x${hex:6:2}"
-	printf "\\x${hex:8:2}\\x${hex:10:2}\\x${hex:12:2}\\x${hex:14:2}"
+	printf "%b%b%b%b%b%b%b%b" \
+		"\\x${hex:0:2}" "\\x${hex:2:2}" "\\x${hex:4:2}" "\\x${hex:6:2}" \
+		"\\x${hex:8:2}" "\\x${hex:10:2}" "\\x${hex:12:2}" "\\x${hex:14:2}"
 }
 
 # Haskell binary encoding of UTF8 strings
@@ -168,7 +174,7 @@ encode_string() {
 # Haskell binary encoding of bytes
 encode_byte() {
 	hex=$(printf "%02x" "$1")
-	printf "\\x${hex}"
+	printf "%b" "\\x${hex}"
 }
 
 # Elm 0.19.1 compact encoding of short UTF8 strings
@@ -180,19 +186,24 @@ encode_string_short() {
 # Build Elm 0.19.0 versions.dat
 build_versions_dat() {
 	cd "$pkgdir" || return
-	count=$(ls -d -- */*/* | wc -l)
+	count=$(list_dependencies | wc -l)
 	(	
 		# total number of versions
 		encode_int64 "$count"
 		# number of packages
 		encode_int64 "$count"
 
-		ls -d -- */*/* \
+		list_dependencies \
 			| sort -t / -k 1,1 -k 2,2 \
 			| while IFS=/ read -r author project version
 		do
 			pkg=$author/$project
-			[ "$pkg" = "$prevpkg" ] && fail "multiple versions of package $pkg"
+			[ "$pkg" = "${prevpkg:-}" ] && fail "multiple versions of package $pkg"
+
+			# $pkg and $prevpkg are local to the subshell that runs this while loop,
+			# so the warnings about interference with build_registry_dat below are
+			# irrelevant.
+			# shellcheck disable=SC2030
 			prevpkg="$author"/"$project"
 
 			encode_string "$author"
@@ -213,19 +224,20 @@ build_versions_dat() {
 # Build Elm 0.19.1 registry.dat
 build_registry_dat() {
 	cd "$pkgdir" || return
-	count=$(ls -d -- */*/* | wc -l)
+	count=$(list_dependencies | wc -l)
 	(	
 		# total number of versions
 		encode_int64 "$count"
 		# number of packages
 		encode_int64 "$count"
 
-		ls -d -- */*/* \
+		list_dependencies \
 			| sort -t / -k 1,1 -k 2,2 \
 			| while IFS=/ read -r author project version
 		do
 			pkg=$author/$project
-			[ "$pkg" = "$prevpkg" ] && fail "multiple versions of package $pkg"
+			# shellcheck disable=SC2031
+			[ "$pkg" = "${prevpkg:-}" ] && fail "multiple versions of package $pkg"
 			prevpkg="$author"/"$project"
 
 			encode_string_short "$author"
