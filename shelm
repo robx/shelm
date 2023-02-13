@@ -120,11 +120,16 @@ fetch() {
 	esac
 }
 
+# List dependencies in the local package cache, in the form $author/$project/$version.
+list_dependencies() {
+	cd "$pkgdir" && ls -d -- */*/* 2>/dev/null
+}
+
 # Prune dependencies from the local package cache that don't match the required
 # dependency versions. This is necessary due to the limitation to one version
 # per package of the registry generators.
 prune_dependencies() {
-	(cd "$pkgdir" && ls -d -- */*/* 2>/dev/null) | while IFS=/ read -r author project version
+	list_dependencies | while IFS=/ read -r author project version
 	do
 		dep="$(json_dependency_version "$author/$project" < elm.json)"
 		if [ "$version" != "$dep" ]; then
@@ -180,14 +185,14 @@ encode_string_short() {
 # Build Elm 0.19.0 versions.dat
 build_versions_dat() {
 	cd "$pkgdir" || return
-	count=$(ls -d -- */*/* | wc -l)
+	count=$(list_dependencies | wc -l)
 	(	
 		# total number of versions
 		encode_int64 "$count"
 		# number of packages
 		encode_int64 "$count"
 
-		ls -d -- */*/* \
+		list_dependencies \
 			| sort -t / -k 1,1 -k 2,2 \
 			| while IFS=/ read -r author project version
 		do
@@ -213,14 +218,14 @@ build_versions_dat() {
 # Build Elm 0.19.1 registry.dat
 build_registry_dat() {
 	cd "$pkgdir" || return
-	count=$(ls -d -- */*/* | wc -l)
+	count=$(list_dependencies | wc -l)
 	(	
 		# total number of versions
 		encode_int64 "$count"
 		# number of packages
 		encode_int64 "$count"
 
-		ls -d -- */*/* \
+		list_dependencies \
 			| sort -t / -k 1,1 -k 2,2 \
 			| while IFS=/ read -r author project version
 		do
