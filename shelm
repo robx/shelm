@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e -o pipefail
+set -eu -o pipefail
 
 usage() {
 	cat <<EOF
@@ -197,7 +197,7 @@ build_versions_dat() {
 			| while IFS=/ read -r author project version
 		do
 			pkg=$author/$project
-			[ "$pkg" = "$prevpkg" ] && fail "multiple versions of package $pkg"
+			[ "$pkg" = "${prevpkg:-}" ] && fail "multiple versions of package $pkg"
 			prevpkg="$author"/"$project"
 
 			encode_string "$author"
@@ -230,7 +230,7 @@ build_registry_dat() {
 			| while IFS=/ read -r author project version
 		do
 			pkg=$author/$project
-			[ "$pkg" = "$prevpkg" ] && fail "multiple versions of package $pkg"
+			[ "$pkg" = "${prevpkg:-}" ] && fail "multiple versions of package $pkg"
 			prevpkg="$author"/"$project"
 
 			encode_string_short "$author"
